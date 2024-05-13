@@ -235,6 +235,24 @@ class RootSystem implements ExecuteSystem, InitSystem, CleanupSystem {
     }
   }
 
+  add(List<System> systems) {
+    for (var s in systems) {
+      if (s is EntityManagerSystem) {
+        s._manager = _entityManager;
+      }
+      if (s is InitSystem) {
+        s.init();
+        _initSystems.add(s);
+      }
+      if (s is ExecuteSystem) {
+        _executeSystems.add(s);
+      }
+      if (s is CleanupSystem) {
+        _cleanupSystems.add(s);
+      }
+    }
+  }
+
   /// Implementation of [InitSystem]
   /// Delegates the call to its children.
   @override

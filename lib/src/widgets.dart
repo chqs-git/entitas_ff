@@ -146,7 +146,7 @@ class EntityOrNullObservingWidget extends StatefulWidget {
   const EntityOrNullObservingWidget({required this.provider, required this.builder, required this.builderNotFound}) : super();
 
   @override
-  State<StatefulWidget> createState() => EntityObservingWidgetState();
+  State<StatefulWidget> createState() => EntityOrNullObservingWidgetState();
 }
 
 /// State class for [EntityOrNullObservingWidget].
