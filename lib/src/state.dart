@@ -54,6 +54,8 @@ class Entity {
 
   /// Returns component instance by type or `null` if not present.
   T? getOrNull<T extends Component>() {
+    print(_components);
+    print(T);
     Component? c = _components[T];
     if (c == null) { return null; }
     return c as T;
