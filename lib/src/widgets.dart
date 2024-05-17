@@ -24,6 +24,13 @@ class EntityManagerProvider extends InheritedWidget {
     return context.dependOnInheritedWidgetOfExactType<EntityManagerProvider>() as EntityManagerProvider;
   }
 
+  Widget newLayer({required Widget child, required List<System> systems}) =>
+      EntityManagerProvider(
+          entityManager: entityManager,
+          systems: RootSystem(entityManager, systems),
+          child: child
+      );
+
   @override
   bool updateShouldNotify(EntityManagerProvider oldWidget) => oldWidget.entityManager != entityManager;
 }
@@ -59,6 +66,7 @@ class _RootSystemWidgetState extends State<_RootSystemWidget> with SingleTickerP
 
   @override
   void dispose() {
+    widget.systems.close();
     _ticker.stop();
     super.dispose();
   }

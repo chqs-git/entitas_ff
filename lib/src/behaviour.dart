@@ -15,6 +15,12 @@ abstract class InitSystem extends System {
   init();
 }
 
+/// An interface which user needs to implement in order to mark a class an close system.
+abstract class CloseSystem extends System {
+  close();
+}
+
+
 /// An interface which user needs to implement in order to mark a class a cleanup system.
 abstract class CleanupSystem extends System {
   cleanup();
@@ -208,9 +214,11 @@ abstract class TriggeredSystem extends EntityManagerSystem implements ExecuteSys
 /// The children are devided into lists according to the interfaces they implement.
 /// When the root system is called as [InitSystem], it will delegate the call to it's children which also implement [InitSystem] interface.
 /// Same applies to [ExecuteSystem] and [CleanupSystem] calls and implementing children.
-class RootSystem implements ExecuteSystem, InitSystem, CleanupSystem {
+class RootSystem implements ExecuteSystem, InitSystem, CleanupSystem, CloseSystem {
   // holds reference to child systems which implement [InitSystem] interface
   final List<InitSystem> _initSystems = [];
+  // holds reference to child systems which implement [CloseSystem] interface
+  final List<CloseSystem> _closeSystems  = [];
   // holds reference to child systems which implement [ExecuteSystem] interface
   final List<ExecuteSystem> _executeSystems = [];
   // holds reference to child systems which implement [CleanupSystem] interface
@@ -226,23 +234,8 @@ class RootSystem implements ExecuteSystem, InitSystem, CleanupSystem {
       if (s is InitSystem) {
         _initSystems.add(s);
       }
-      if (s is ExecuteSystem) {
-        _executeSystems.add(s);
-      }
-      if (s is CleanupSystem) {
-        _cleanupSystems.add(s);
-      }
-    }
-  }
-
-  add(List<System> systems) {
-    for (var s in systems) {
-      if (s is EntityManagerSystem) {
-        s._manager = _entityManager;
-      }
-      if (s is InitSystem) {
-        s.init();
-        _initSystems.add(s);
+      if (s is CloseSystem) {
+        _closeSystems.add(s);
       }
       if (s is ExecuteSystem) {
         _executeSystems.add(s);
@@ -259,6 +252,15 @@ class RootSystem implements ExecuteSystem, InitSystem, CleanupSystem {
   init() {
     for (var s in _initSystems){
       s.init();
+    }
+  }
+
+  /// Implementation of [CloseSystem]
+  /// Delegates the call to its children.
+  @override
+  close() {
+    for (var s in _closeSystems){
+      s.close();
     }
   }
 
