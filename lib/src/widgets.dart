@@ -266,3 +266,65 @@ class GroupObservingWidgetState extends State<GroupObservingWidget> implements G
     }
   }
 }
+
+typedef Group EntityGroupProvider(EntityManager entityManager);
+typedef Widget EntityMapBackedWidgetBuilder(Group entities, BuildContext context);
+
+class EntityMultiMapObservingWidget extends StatefulWidget {
+  final EntityGroupProvider provider;
+  final EntityMapBackedWidgetBuilder builder;
+
+  const EntityMultiMapObservingWidget({required this.provider, required this.builder});
+
+  @override
+  State<StatefulWidget> createState() => EntityMultiMapObservingWidgetState();
+}
+
+class EntityMultiMapObservingWidgetState extends State<EntityMultiMapObservingWidget> implements GroupObserver {
+  // holds reference to group under observation
+  Group? _group;
+  // marks if `setState` was already called
+  var _isDirty = false;
+
+  @override
+  Widget build(BuildContext context) {
+    _isDirty = false;
+    var manager = EntityManagerProvider.of(context).entityManager;
+    _group?.removeObserver(this);
+    _group = widget.provider(manager);
+    _group?.addObserver(this);
+
+    return widget.builder(_group!, context);
+  }
+
+  @override
+  void dispose() {
+    _group?.removeObserver(this);
+    super.dispose();
+  }
+
+  /// Implementation of [GroupObserver]
+  @override
+  added(Group group, Entity entity) {
+    _update();
+  }
+
+  /// Implementation of [GroupObserver]
+  @override
+  removed(Group group, Entity entity) {
+    _update();
+  }
+
+  /// Implementation of [GroupObserver]
+  @override
+  updated(Group group, Entity entity) {
+    _update();
+  }
+
+  _update() {
+    if (_isDirty == false) {
+      _isDirty = true;
+      setState(() {});
+    }
+  }
+}
