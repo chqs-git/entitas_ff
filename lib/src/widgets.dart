@@ -77,6 +77,48 @@ class _RootSystemWidgetState extends State<_RootSystemWidget> with SingleTickerP
   }
 }
 
+typedef Widget EntityMapBackedWidgetBuilder(EntityMultiMap map, BuildContext context);
+typedef EntityMultiMap EntityMapProvider(EntityManager entityManager);
+
+class EntityMapObservingWidget extends StatefulWidget {
+  final EntityMapProvider provider;
+  final EntityMapBackedWidgetBuilder builder;
+
+  const EntityMapObservingWidget({required this.provider, required this.builder}) : super();
+
+  @override
+  State<StatefulWidget> createState() => EntityMapObservingWidgetState();
+}
+
+class EntityMapObservingWidgetState extends State<EntityMapObservingWidget> implements EntityMapObserver {
+  EntityMultiMap<Component, dynamic>? _map;
+  var _isDirty = false;
+
+  @override
+  Widget build(BuildContext context) {
+    _isDirty = false;
+    final manager = EntityManagerProvider.of(context).entityManager;
+    _map?.removeObserver(this);
+    _map = widget.provider(manager);
+    _map?.addObserver(this);
+    return widget.builder(_map!, context);
+  }
+
+  @override
+  void dispose() {
+    _map?.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  onUpdate(key, value) {
+    if (_isDirty == false) {
+      _isDirty = true;
+      setState(() {});
+    }
+  }
+}
+
 /// Defines a function which given an [EntityManager] instance returns a reference to an [Entity].
 typedef Entity? EntityProvider(EntityManager entityManager);
 /// Defines a function which given an [Entity] (can be `null`) and [BuildContext] returns a an instance of [Widget].
@@ -93,7 +135,6 @@ class EntityObservingWidget extends StatefulWidget {
 
   @override
   State<StatefulWidget> createState() => EntityObservingWidgetState();
-
 }
 
 /// State class for [EntityObservingWidget].

@@ -15,6 +15,13 @@ void main() {
     expect(nameMap["Alex"]?.getOrNull<Age>()?.value, 45);
   });
 
+  test('Observe changes in maps', (){
+    EntityManager em = EntityManager();
+    em.createEntity()..set(Name("Max"))..set(Age(37));
+    em.createEntity()..set(Name("Maxim"))..set(Age(45));
+
+  });
+
   test('Multi Map over age', (){
     EntityManager em = EntityManager();
     em.createEntity()..set(Name("Max"))..set(Age(37));

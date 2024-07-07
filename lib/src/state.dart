@@ -249,6 +249,10 @@ abstract class GroupObserver {
   removed(Group group, Entity entity);
 }
 
+abstract class EntityMapObserver<K, V> {
+  onUpdate(K key, V value);
+}
+
 /// Group represent a collection of entities, which match a given [EntityMatcher] and is always up to date.
 /// It can be instantiated only through an instance of [EntityManager].
 /// ### Example
@@ -633,14 +637,17 @@ class EntityMap<C extends Component, T> implements EntityObserver, EntityManager
   }
 }
 
+
 /// A class which let users map entities against values of a component.
 /// ### Example
 ///     var ageMap = EntityMultiMap<Age, int>(em, (name) => name.value);
-/// 
+///
 /// It is different from [EntityMap] in a way that it lets multiple entities match agains the same key.
 class EntityMultiMap<C extends Component, T> implements EntityObserver, EntityManagerObserver {
   // holds list of entities mapped against key
   final Map<T, List<Entity>> _entities = Map();
+  // References to group observers.
+  Set<EntityMapObserver> _observers = new Set();
   // holds key producer
   final KeyProducer<C, T> _keyProducer;
   EntityMultiMap(EntityManager entityManager, this._keyProducer) {
@@ -653,11 +660,27 @@ class EntityMultiMap<C extends Component, T> implements EntityObserver, EntityMa
     }
   }
 
+  /// Adds observer to the group which will be notified on every mutating action.
+  /// Observers are stored in a [Set].
+  addObserver(EntityMapObserver o) {
+    _observers.add(o);
+    __observerList = null;
+  }
+
+  /// Remove observer form the Group.
+  removeObserver(EntityMapObserver o) {
+    _observers.remove(o);
+    __observerList = null;
+  }
+
   /// EntityMultiMap is an [EntityManagerListener], this is an implementation of this protocol.
   /// Please don't use manually.
   @override
   entityCreated(Entity e) {
     e.addObserver(this);
+    for (var o in _observerList) {
+      o.onUpdate(this, e);
+    }
   }
 
   /// EntityMultiMap is an [EntityManagerListener], this is an implementation of this protocol.
@@ -677,6 +700,9 @@ class EntityMultiMap<C extends Component, T> implements EntityObserver, EntityMa
     if (newC is C) {
       var list = _entities[_keyProducer(newC)] ?? List.empty(growable: true);
       list.add(e);
+      for (var o in _observerList) {
+        o.onUpdate(this, e);
+      }
       _entities[_keyProducer(newC)] = list;
     }
   }
@@ -689,5 +715,15 @@ class EntityMultiMap<C extends Component, T> implements EntityObserver, EntityMa
   /// Get a list of [Entity] instances or an empty list based on provided key.
   List<Entity> operator [](T key) {
     return List.unmodifiable(_entities[key] ?? List.empty());
+  }
+
+  // Caching the observer list, so that when observers are called they can safely remove themselves as observers
+  List<EntityMapObserver>? __observerList; //  = List(0)
+  List<EntityMapObserver> get _observerList {
+    if (__observerList == null) {
+      __observerList = List.unmodifiable(_observers);
+    }
+
+    return __observerList!;
   }
 }
