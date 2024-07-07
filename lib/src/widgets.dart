@@ -77,21 +77,21 @@ class _RootSystemWidgetState extends State<_RootSystemWidget> with SingleTickerP
   }
 }
 
-typedef Widget EntityMapBackedWidgetBuilder(EntityMultiMap map, BuildContext context);
-typedef EntityMultiMap EntityMapProvider(EntityManager entityManager);
+typedef Widget EntityMapBackedWidgetBuilder<C extends Component, K>(EntityMultiMap<C, K> map, BuildContext context);
+typedef EntityMultiMap<C, K> EntityMapProvider<C extends Component, K>(EntityManager entityManager);
 
-class EntityMapObservingWidget extends StatefulWidget {
-  final EntityMapProvider provider;
-  final EntityMapBackedWidgetBuilder builder;
+class EntityMapObservingWidget<C extends Component, K> extends StatefulWidget {
+  final EntityMapProvider<C, K> provider;
+  final EntityMapBackedWidgetBuilder<C, K> builder;
 
   const EntityMapObservingWidget({required this.provider, required this.builder}) : super();
 
   @override
-  State<StatefulWidget> createState() => EntityMapObservingWidgetState();
+  EntityMapObservingWidgetState<C, K> createState() => EntityMapObservingWidgetState();
 }
 
-class EntityMapObservingWidgetState extends State<EntityMapObservingWidget> implements EntityMapObserver {
-  EntityMultiMap<Component, dynamic>? _map;
+class EntityMapObservingWidgetState<C extends Component, K> extends State<EntityMapObservingWidget<C, K>> implements EntityMapObserver {
+  EntityMultiMap<C, K>? _map;
   var _isDirty = false;
 
   @override
